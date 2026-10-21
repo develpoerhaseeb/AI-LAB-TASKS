@@ -1,3 +1,4 @@
+# lab 5 maa sir rasikh na minimax aur alpha-beta ka concept dya tha
 import math
 
 leaves_mm = 0
@@ -56,3 +57,5 @@ for s in tests:
     print("Minimax:", minimax(0, 0, True, s, d), "Leaves:", leaves_mm)
     print("AlphaBeta:", alphabeta(0, 0, True, s, d, float('-inf'), float('inf')), "Leaves:", leaves_ab)
     print()
+
+#1.5 ganta laga diff chatbot sa phir jaa kr khud write kya haa
