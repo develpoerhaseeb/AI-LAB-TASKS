@@ -1,61 +1,87 @@
 # lab 5 maa sir rasikh na minimax aur alpha-beta ka concept dya tha
 import math
 
-leaves_mm = 0
-leaves_ab = 0
+# Global counters to track how many leaf nodes are evaluated
+minimax_leaf_count = 0
+alpha_beta_leaf_count = 0
 
-def minimax(curDepth, nodeIndex, maxTurn, scores, targetDepth):
-    global leaves_mm
-    if curDepth == targetDepth:
-        leaves_mm = leaves_mm + 1
-        return scores[nodeIndex]
-    if maxTurn:
+def run_minimax(current_depth, idx, is_max_player, leaf_values, max_depth):
+    global minimax_leaf_count
+    
+    # Base case: reached the bottom (leaf node)
+    if current_depth == max_depth:
+        minimax_leaf_count += 1
+        return leaf_values[idx]
+    
+    if is_max_player:
         return max(
-            minimax(curDepth + 1, nodeIndex * 2, False, scores, targetDepth),
-            minimax(curDepth + 1, nodeIndex * 2 + 1, False, scores, targetDepth)
+            run_minimax(current_depth + 1, idx * 2, False, leaf_values, max_depth),
+            run_minimax(current_depth + 1, idx * 2 + 1, False, leaf_values, max_depth)
         )
     else:
         return min(
-            minimax(curDepth + 1, nodeIndex * 2, True, scores, targetDepth),
-            minimax(curDepth + 1, nodeIndex * 2 + 1, True, scores, targetDepth)
+            run_minimax(current_depth + 1, idx * 2, True, leaf_values, max_depth),
+            run_minimax(current_depth + 1, idx * 2 + 1, True, leaf_values, max_depth)
         )
 
-def alphabeta(depth, index, maxTurn, scores, target, alpha, beta):
-    global leaves_ab
-    if depth == target:
-        leaves_ab = leaves_ab + 1
-        return scores[index]
-    if maxTurn:
-        value = float('-inf')
+def alpha_beta_search(current_depth, idx, is_max_player, leaf_values, max_depth, alpha, beta):
+    global alpha_beta_leaf_count
+    
+    # Base case: reached the bottom (leaf node)
+    if current_depth == max_depth:
+        alpha_beta_leaf_count += 1
+        return leaf_values[idx]
+    
+    if is_max_player:
+        best_val = float('-inf')
         for i in range(2):
-            value = max(value, alphabeta(depth + 1, index * 2 + i, False, scores, target, alpha, beta))
-            alpha = max(alpha, value)
+            val = alpha_beta_search(current_depth + 1, idx * 2 + i, False, leaf_values, max_depth, alpha, beta)
+            best_val = max(best_val, val)
+            alpha = max(alpha, best_val)
             if alpha >= beta:
-                break
-        return value
+                break  # Beta Cutoff (Pruning)
+        return best_val
     else:
-        value = float('inf')
+        best_val = float('inf')
         for i in range(2):
-            value = min(value, alphabeta(depth + 1, index * 2 + i, True, scores, target, alpha, beta))
-            beta = min(beta, value)
+            val = alpha_beta_search(current_depth + 1, idx * 2 + i, True, leaf_values, max_depth, alpha, beta)
+            best_val = min(best_val, val)
+            beta = min(beta, best_val)
             if alpha >= beta:
-                break
-        return value
+                break  # Alpha Cutoff (Pruning)
+        return best_val
 
-tests = [
+def find_best_root_action(leaf_values, max_depth):
+    best_val, chosen_action, alpha = float('-inf'), None, float('-inf')
+    for i, action_name in enumerate(["Left", "Right"]):
+        v = alpha_beta_search(1, i, False, leaf_values, max_depth, alpha, float('inf'))
+        if v > best_val:
+            best_val, chosen_action = v, action_name
+        alpha = max(alpha, best_val)
+    return best_val, chosen_action
+
+# Test Cases
+test_cases = [
     [3, 5, 2, 9, 3, 5, 2, 9],
     [5, 3, 9, 2, 5, 3, 9, 2],
     [2, 9, 3, 5, 2, 9, 3, 5],
-    [4, 4, 4, 4, 4, 4, 4, 4]
+    [4, 4, 4, 4, 4, 4, 4, 4],
+    [3, 5, 2, 9, 0, 7, 0, 0],
 ]
 
-for s in tests:
-    leaves_mm = 0
-    leaves_ab = 0
-    d = int(math.log2(len(s)))
-    print("Scores:", s)
-    print("Minimax:", minimax(0, 0, True, s, d), "Leaves:", leaves_mm)
-    print("AlphaBeta:", alphabeta(0, 0, True, s, d, float('-inf'), float('inf')), "Leaves:", leaves_ab)
-    print()
+for scores in test_cases:
+    minimax_leaf_count = 0
+    alpha_beta_leaf_count = 0
+    depth = int(math.log2(len(scores)))
+    
+    print("Scores:", scores)
+    print("Minimax Value:", run_minimax(0, 0, True, scores, depth), "| Leaves Evaluated:", minimax_leaf_count)
+    print("Alpha-Beta Value:", alpha_beta_search(0, 0, True, scores, depth, float('-inf'), float('inf')), "| Leaves Evaluated:", alpha_beta_leaf_count)
+    print("Pruning Successful:", alpha_beta_leaf_count <= minimax_leaf_count)
+    
+    alpha_beta_leaf_count = 0
+    val, act = find_best_root_action(scores, depth)
+    print("Root Best Action:", act, "with Value:", val)
+    print("-" * 50)
 
 #1.5 ganta laga diff chatbot sa phir jaa kr khud write kya haa
